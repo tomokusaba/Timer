@@ -403,7 +403,7 @@ namespace Timer
                 };
             }
 
-            // 7) アニメーション: 移動中・読み取り中のブロックを表示
+            // 7) アニメーション: 移動中・読み取り中のブロックを表示（1箇所ずつ）
             var remainingData = dataCount - optimizedCount;
             if (!isCompleted && remainingData > 0 && _isRunning)
             {
@@ -417,26 +417,26 @@ namespace Timer
                     }
                 }
 
-                // 読み取り中（オレンジ）: 複数箇所をスキャン
+                // アニメーションフェーズ: 読み取り→移動→書き込みのサイクル
+                var cyclePhase = activityPhase % 3;
+
                 if (unprocessedPositions.Count > 0)
                 {
-                    for (var k = 0; k < Math.Min(6, unprocessedPositions.Count); k++)
-                    {
-                        var idx = (activityPhase + k * 5) % unprocessedPositions.Count;
-                        var pos = unprocessedPositions[idx];
-                        movableResult[pos] = CellReadingFill;  // オレンジ
-                    }
-                }
+                    // 現在処理中のデータブロック（1箇所だけ）
+                    var currentIdx = (activityPhase / 3) % unprocessedPositions.Count;
+                    var currentPos = unprocessedPositions[currentIdx];
 
-                // 書き込み中（黄色）: 交換中の位置
-                if (movedFreeCount > 0 && movedFreeCount < freeCount)
-                {
-                    // 後方の境界付近
-                    var boundaryPos = movableCells - movedFreeCount - 1;
-                    if ((uint)boundaryPos < (uint)movableCells && movableResult[boundaryPos] != CellFreeFill)
+                    if (cyclePhase == 0)
                     {
-                        movableResult[boundaryPos] = CellMovingFill;
+                        // 読み取り中（オレンジ）
+                        movableResult[currentPos] = CellReadingFill;
                     }
+                    else if (cyclePhase == 1)
+                    {
+                        // 移動中（黄色）
+                        movableResult[currentPos] = CellMovingFill;
+                    }
+                    // cyclePhase == 2: 書き込み完了、元の色
                 }
             }
 
